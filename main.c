@@ -3,10 +3,12 @@
 #include <ctype.h>
 
 void rotEncrypt(char *word);
+void subEncrypt(char *word);
 void rotDecryptKey(char *word);
+void subDecryptKey(char *word);
 void rotDecryptDict(char *word);
 int dictCheck(char *test);
-void upperCase(char *word);
+void upperCase(char *str);
 
 int main() {
     char word[1000]; //creates char array for input string to be stored in
@@ -14,12 +16,16 @@ int main() {
     printf("Input word: ");
     scanf("%[^\n]s", word); // scans input string into char array
     upperCase(word); //converts any lowercase letters in string to uppercase
-    printf("1. Rotation Encryption\n2. Substitution Encryption\n3. Rotation Decryption (Key)\n4. Substitution Decryption (Key)\n5. Rotation Decryption (Dictionary Attack)\n6. Substitution Decryption (Dictionary Attack)\nSelection: ");
+    printf("1. Rotation Encryption\n2. Substitution Encryption\n3. Rotation Decryption (Key)\n4. Substitution Decryption (Key)\n5. Rotation Decryption (Dictionary Attack)\nUNAVAILABLE - Substitution Decryption (Dictionary Attack)\nSelection: ");
     scanf("%d", &selection); //takes selection from user
     switch(selection) { //runs function associated with selection
         case 1: rotEncrypt(word); break;
+        case 2: subEncrypt(word); break;
         case 3: rotDecryptKey(word); break;
-        case 5: rotDecryptDict(word); break;
+        case 4: subDecryptKey(word); break;
+        case 5: printf("\nWarning: execution may be killed if input text is too long. This is assumed to be due to the limitations placed on the Che workspace.\n");
+                rotDecryptDict(word); break;
+        default: printf("Invalid selection\n");
     }
 }
 
@@ -66,7 +72,7 @@ void rotDecryptKey(char *word) { //takes a word and rotates each letter backward
 void rotDecryptDict(char *word) { //takes word from input, for each pass through it rotates each letter by one then checks each word against the dictionary file
     int i, j, count, most = 0; //count variables
     char test[1000], mostString[1000] = "*No decryption found*"; //test is explained below, mostString intialised like this so if it is not overwritten, output is not blank
-    const char delim[2] = " "; //delimiter for strtok()
+    const char delim[] = " "; //space is used as delimiter for strtok()
     char *split; //pointer for strtok()
     for(i = 1; i <= 26; i++) { //moves through all possible rotations
         count = 0;
@@ -90,7 +96,43 @@ void rotDecryptDict(char *word) { //takes word from input, for each pass through
             mostString[strlen(word)] = '\0'; //places null terminator after current string
         }
     }
-    printf("%s\n", mostString); //print rotation with most dictionary matches, this should be the correct decryption
+    printf("\nDecrypted: %s\n", mostString); //print rotation with most dictionary matches, this should be the correct decryption
+}
+
+void subEncrypt(char *word) {
+    int i, j; //count variables
+    char key[1000]; //variable to store key in
+    const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; //hardcoded alphabet for comparison
+    printf("\nEncryption key: ");
+    scanf("%s", key); //stores input in key variable
+    //changes lowercase letters in key to uppercase
+    for(i = 0; word[i] != '\0'; i++) { //increment through chars in string until terminating character found 
+        for(j = 0; j < 26; j++) { //tests against each letter of the alphabet
+            if(word[i] == alphabet[j]) { //if the character matches a letter in the alphabet
+                word[i] = key[j]; //replace it with the corresponding letter in the key
+                break; //prevents chained substitutions, only one substitution wanted per letter
+            }
+        }
+    }
+    printf("Encrypted with key: %s\n", word);
+}
+
+void subDecryptKey(char *word) { //identical to subEncrypt with key and alphabet flipped
+    int i, j; //count variables
+    char key[1000]; //variable to store key in
+    const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; //hardcoded alphabet for comparison
+    printf("\nDecryption key: ");
+    scanf("%s", key); //stores input in key variable
+    upperCase(key); //changes lowercase letters in key to uppercase
+    for(i = 0; word[i] != '\0'; i++) { //increment through chars in string until terminating character found 
+        for(j = 0; j < 26; j++) { //tests against each letter of the alphabet
+            if(word[i] == key[j]) { //if the character matches a letter in the key
+                word[i] = alphabet[j]; //replace it with the corresponding letter in the alphabet
+                break; //prevents chained substitutions, only one substitution wanted per letter
+            }
+        }
+    }
+    printf("Decrypted with key: %s\n", word);
 }
 
 int dictCheck(char *test) { //returns 1 if test word is found in dictionary file, else 0
@@ -98,9 +140,9 @@ int dictCheck(char *test) { //returns 1 if test word is found in dictionary file
     char str[100]; //words from dictionary to be scanned into here
     int i; //count variable
     words = fopen("words.txt", "r"); //opens words.txt as a readable file
-    for(i = 0; feof(words) == 0; i++) { //checks against all words in dict file
+    for(i = 0; feof(words) == 0; i++) { //checks against next word in dict file until end of file is reached
         fscanf(words, "%s", str); //scans next word from dict file into char array 'str'
-        upperCase(str); //converts dictionary word to all lowercase
+        upperCase(str); //converts dictionary word to all uppercase
         if(strcmp(str, test) == 0) //if the dictionary word and the test word are the same
             return 1;
     }    
